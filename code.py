@@ -33,7 +33,7 @@ bloons_data = []
 for i in range(rows):
 	bloons_data.append([])
 	for j in range(columns):
-		if i > 0 and i <= 6 and j > 7 and j <= 17:
+		if True:
 			bloons_data[i].append(1 + random.randrange(4))
 		else:
 			bloons_data[i].append(0)
@@ -43,7 +43,7 @@ monkey_initial_position = [2, 7]	# x and y positions (on the grid)
 
 	#	Dart
 flying = False
-dart_speed = 1920
+dart_speed = 2400
 dart_velocity = [0, 0]
 dart_gravity = 3840
 
@@ -114,12 +114,15 @@ while run:
 	#check_button_hovers(mouse_x, mouse_y, left_click, left_onpress)
 
 	draw()
-	delta_time = clock.tick_busy_loop(60) / 1000.0
+	delta_time = clock.tick_busy_loop(240) / 1000.0
 	pg.display.set_caption("Bloons AI - FPS: " + str(int(clock.get_fps())))
 
 	mouse_angle = - math.atan2(mouse_y - (monkey_sprite_position[1] + 98 + 33), mouse_x - (monkey_sprite_position[0] + 98 + 5)) * 180.0 / np.pi
 
-	arm_angle = mouse_angle + 135
+	if flying:
+		arm_angle = mouse_angle
+	else:
+		arm_angle = mouse_angle + 135
 	arm_sprite = pg.transform.scale(monkey_arm, (196, 196))
 	arm_sprite = pg.transform.rotate(arm_sprite, arm_angle)
 
@@ -142,6 +145,7 @@ while run:
 		dart_sprite_position[0] = monkey_sprite_position[0] + 98 + 5 + arm_length * np.cos(arm_angle * np.pi / 180.0) - 68 - offset
 		dart_sprite_position[1] = monkey_sprite_position[1] + 98 + 33 - arm_length * np.sin(arm_angle * np.pi / 180.0) - 68 - offset
 	else:
+		dart_velocity[0] -= (dart_velocity[0] * dart_velocity[0]) * 0.0002 * delta_time
 		dart_velocity[1] += dart_gravity * delta_time
 		dart_angle = - math.atan2(dart_velocity[1], dart_velocity[0]) * 180 / np.pi
 		dart_real_position[0] += dart_velocity[0] * delta_time
@@ -158,5 +162,16 @@ while run:
 
 		dart_sprite_position[0] += - offset
 		dart_sprite_position[1] += - offset
+
+		tip = [0, 0]
+		tip[0] = dart_real_position[0] + 68 * np.cos(dart_angle * np.pi / 180.0)
+		tip[1] = dart_real_position[1] - 68 * np.sin(dart_angle * np.pi / 180.0)
+
+		pop = [-1, -1]
+		pop[0] = tip[0] / cell_width
+		pop[1] = tip[1] / cell_height
+
+		if pop[0] >= 0 and pop[0] < columns and pop[1] >= 0 and pop[1] < rows and bloons_data[int(pop[1])][int(pop[0])] > 0:
+			bloons_data[int(pop[1])][int(pop[0])] = 0
 
 pg.quit()
