@@ -20,6 +20,12 @@ def draw():
 #	Variables
 framerate = 120
 
+class Sprite:
+	def __init__(self, grid_x, grid_y, img_src, angle):
+		self.position = grid_x * cell_width, grid_y * cell_height
+		self.image = pg.image.load("sprites/" + img_src + ".png")
+		self.angle = angle
+
 rows = 10
 columns = 20
 
@@ -33,7 +39,7 @@ bloons_data = []
 for i in range(rows):
 	bloons_data.append([])
 	for j in range(columns):
-		if True:
+		if i >= 1 and i < rows - 3 and j >= columns / 2 and j < columns - 1:
 			bloons_data[i].append(1 + random.randrange(4))
 		else:
 			bloons_data[i].append(0)
@@ -122,7 +128,7 @@ while run:
 	if flying:
 		arm_angle = mouse_angle
 	else:
-		arm_angle = mouse_angle + 135
+		arm_angle = mouse_angle - 45
 	arm_sprite = pg.transform.scale(monkey_arm, (196, 196))
 	arm_sprite = pg.transform.rotate(arm_sprite, arm_angle)
 
@@ -145,7 +151,7 @@ while run:
 		dart_sprite_position[0] = monkey_sprite_position[0] + 98 + 5 + arm_length * np.cos(arm_angle * np.pi / 180.0) - 68 - offset
 		dart_sprite_position[1] = monkey_sprite_position[1] + 98 + 33 - arm_length * np.sin(arm_angle * np.pi / 180.0) - 68 - offset
 	else:
-		dart_velocity[0] -= (dart_velocity[0] * dart_velocity[0]) * 0.0002 * delta_time
+		#dart_velocity[0] -= (dart_velocity[0] * dart_velocity[0]) * 0.0002 * delta_time
 		dart_velocity[1] += dart_gravity * delta_time
 		dart_angle = - math.atan2(dart_velocity[1], dart_velocity[0]) * 180 / np.pi
 		dart_real_position[0] += dart_velocity[0] * delta_time
