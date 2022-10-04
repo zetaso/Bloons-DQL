@@ -93,12 +93,13 @@ while run:
 
 	#left_onpress = not left_click
 	left_click = mouse.get_pressed(3)[0]
-	if left_click:
+	if left_click and not flying:
 		flying = True
 		dart_velocity[0] = dart_speed * np.cos(mouse_angle * np.pi / 180.0)
 		dart_velocity[1] = - dart_speed * np.sin(mouse_angle * np.pi / 180.0)
-		dart_real_position[0] = dart_sprite_position[0] + 68
-		dart_real_position[1] = dart_sprite_position[1] + 68
+		magnitude = np.sqrt(dart_velocity[0]**2 + dart_velocity[1]**2)
+		dart_real_position[0] = monkey_sprite_position[0] + 98 + cell_width / 2 + dart_velocity[0] / magnitude
+		dart_real_position[1] = monkey_sprite_position[1] + 98 + cell_height / 2 + dart_velocity[1] / magnitude
 	#left_onpress = left_onpress and left_click
 	right_click = mouse.get_pressed(3)[2]
 	if right_click:
@@ -113,7 +114,7 @@ while run:
 	#check_button_hovers(mouse_x, mouse_y, left_click, left_onpress)
 
 	draw()
-	delta_time = clock.tick_busy_loop(framerate) / 1000.0
+	delta_time = clock.tick_busy_loop(60) / 1000.0
 	pg.display.set_caption("Bloons AI - FPS: " + str(int(clock.get_fps())))
 
 	mouse_angle = - math.atan2(mouse_y - (monkey_sprite_position[1] + 98 + 33), mouse_x - (monkey_sprite_position[0] + 98 + 5)) * 180.0 / np.pi
@@ -151,8 +152,8 @@ while run:
 		dart_sprite = pg.transform.scale(dart, (136, 136))
 		dart_sprite = pg.transform.rotate(dart_sprite, dart_angle)
 
-		dx = 68 * (np.cos(mouse_angle * np.pi / 180.0) + np.sin(mouse_angle * np.pi / 180.0))
-		dy = 68 * (np.cos(mouse_angle * np.pi / 180.0) - np.sin(mouse_angle * np.pi / 180.0))
+		dx = 68 * (np.cos(dart_angle * np.pi / 180.0) + np.sin(dart_angle * np.pi / 180.0))
+		dy = 68 * (np.cos(dart_angle * np.pi / 180.0) - np.sin(dart_angle * np.pi / 180.0))
 		offset = max(abs(dx), abs(dy)) - 68
 
 		dart_sprite_position[0] += - offset
