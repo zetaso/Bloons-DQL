@@ -6,41 +6,84 @@ import sys
 import math
 from pygame import gfxdraw
 
+sign_fix = -1
+
 def draw():
-	surface.blit(background_sprite, (0, 0))
-	for i in range(rows):
-		for j in range(columns):
-			if bloons_data[i][j] > 0:
-				surface.blit(bloon_sprites[bloons_data[i][j] - 1], (j * cell_width, i * cell_height))
-	surface.blit(monkey_sprite, monkey_sprite_position)
-	surface.blit(arm_sprite, arm_sprite_position)
-	surface.blit(dart_sprite, dart_sprite_position)
+	background_sprite.draw()
+	for i in range(columns):
+		for j in range(rows):
+			if bloon_sprites[i][j] != None:
+				bloon_sprites[i][j].draw()
+	monkey_sprite.draw()
+	arm_sprite.draw()
+	dart_sprite.draw()
 	pg.display.update()
+
+class Sprite:
+	def __init__(self, x, y, img_src, w, h):
+		self.x = x
+		self.y = y
+		self.w = w
+		self.h = h
+		self.tx = x - w / 2
+		self.ty = y - h / 2
+		self.tw = w
+		self.th = h
+		self.source = pg.image.load("sprites/" + img_src)
+		self.image = pg.transform.scale(self.source, (w, h))
+		self.angle = 0
+
+	def set_center(self, x, y):
+		self.x = x
+		self.y = y
+		self.tx = x - self.w / 2
+		self.ty = y - self.h / 2
+
+	def update(self):
+		self.tx = self.x - self.tw / 2
+		self.ty = self.y - self.th / 2
+
+	def set_angle(self, new_angle):
+		if self.angle == new_angle:
+			return
+		self.angle = new_angle
+		rad_angle = self.angle * np.pi / 180.0
+		self.image = pg.transform.scale(self.source, (self.w, self.h))
+		self.image = pg.transform.rotate(self.image, sign_fix * self.angle)
+		if np.cos(rad_angle) * np.sin(rad_angle) >= 0:
+			self.tw = np.absolute(self.w * np.cos(rad_angle) + self.h * np.sin(rad_angle))
+			self.th = np.absolute(self.w * np.sin(rad_angle) + self.h * np.cos(rad_angle))
+		else:
+			self.tw = np.absolute(self.w * np.cos(rad_angle) - self.h * np.sin(rad_angle))
+			self.th = np.absolute(self.w * np.sin(rad_angle) - self.h * np.cos(rad_angle))
+		self.tx = self.x - self.tw / 2
+		self.ty = self.y - self.th / 2
+
+	def draw(self):
+		surface.blit(self.image, (self.tx, self.ty))
 
 #	Variables
 framerate = 120
+delta_time = 0.0008
 
-class Sprite:
-	def __init__(self, grid_x, grid_y, img_src, angle):
-		self.position = grid_x * cell_width, grid_y * cell_height
-		self.image = pg.image.load("sprites/" + img_src + ".png")
-		self.angle = angle
-
-rows = 10
 columns = 20
+rows = 10
 
 cell_width = 57
 cell_height = 80
+
+width = columns * cell_width
+height = rows * cell_height
 
 mouse_angle = 0
 
 	#	Bloons
 bloons_data = []
-for i in range(rows):
+for i in range(columns):
 	bloons_data.append([])
-	for j in range(columns):
-		if i >= 1 and i < rows - 3 and j >= columns / 2 and j < columns - 1:
-			bloons_data[i].append(1 + random.randrange(4))
+	for j in range(rows):
+		if i >= columns / 2 and i < columns - 1 and (j == 2 or j == 4 or j == 6):
+			bloons_data[i].append(1)
 		else:
 			bloons_data[i].append(0)
 
@@ -59,33 +102,23 @@ surface = pg.display.set_mode((columns * cell_width, rows * cell_height))
 clock = pg.time.Clock()
 
 #	Sprites
-background_sprite = pg.image.load("sprites/background.png")
+background_sprite = Sprite(width / 2, height / 2, "background.png", width, height)
+bloon_img = "red_bloon", "green_bloon", "blue_bloon", "yellow_bloon"
 
 bloon_sprites = []
-bloon_sprites.append(pg.image.load("sprites/red_bloon.png"))
-bloon_sprites.append(pg.image.load("sprites/green_bloon.png"))
-bloon_sprites.append(pg.image.load("sprites/blue_bloon.png"))
-bloon_sprites.append(pg.image.load("sprites/yellow_bloon.png"))
+for i in range(columns):
+	bloon_sprites.append([])
+	for j in range(rows):
+		if bloons_data[i][j] == 1:
+			bloon_sprites[i].append(Sprite((i + 0.5) * cell_width, (j + 0.5) * cell_height, bloon_img[random.randrange(4)] + ".png", cell_width, cell_height))
+			#bloon_sprites[i][j].set_angle(random.randrange(11) - 5)
+		else:
+			bloon_sprites[i].append(None)
 
-for i in range(4):
-	bloon_sprites[i] = pg.transform.scale(bloon_sprites[i], (cell_width, cell_height))
-	#bloon_sprites[i] = pg.transform.rotate(bloon_sprites[i], random.randrange(11) - 5)
-
-monkey_sprite = pg.image.load("sprites/monkey_centered.png")
-monkey_sprite = pg.transform.scale(monkey_sprite, (196, 196))
-monkey_sprite_position = [monkey_initial_position[0] * cell_width - 98, monkey_initial_position[1] * cell_height - 98]
-
-arm_angle = 0
-monkey_arm = pg.image.load("sprites/monkey_arm_centered.png")
-arm_sprite = pg.transform.scale(monkey_arm, (196, 196))
-arm_sprite = pg.transform.rotate(arm_sprite, arm_angle)
-arm_sprite_position = [0, 0]
-
-dart = pg.image.load("sprites/dart.png")
-dart_sprite = pg.transform.scale(dart, (136, 136))
-dart_sprite = pg.transform.rotate(dart_sprite, mouse_angle)
-dart_sprite_position = [0, 0]
-dart_real_position = [0, 0]
+monkey_sprite = Sprite(2.5 * cell_width, 7.5 * cell_height, "monkey.png", 148, 116)
+arm_sprite = Sprite(0, 0, "monkey_arm_centered.png", 196, 196)
+arm_sprite.set_center(monkey_sprite.x - 25, monkey_sprite.y - 5)
+dart_sprite = Sprite(0, 0, "dart.png", 136, 136)
 
 #	Juego
 run = True
@@ -102,10 +135,12 @@ while run:
 	if left_click and not flying:
 		flying = True
 		dart_velocity[0] = dart_speed * np.cos(mouse_angle * np.pi / 180.0)
-		dart_velocity[1] = - dart_speed * np.sin(mouse_angle * np.pi / 180.0)
+		dart_velocity[1] = dart_speed * np.sin(mouse_angle * np.pi / 180.0)
 		magnitude = np.sqrt(dart_velocity[0]**2 + dart_velocity[1]**2)
-		dart_real_position[0] = monkey_sprite_position[0] + 98 + cell_width / 2 + dart_velocity[0] / magnitude
-		dart_real_position[1] = monkey_sprite_position[1] + 98 + cell_height / 2 + dart_velocity[1] / magnitude
+		dart_sprite.x = monkey_sprite.x + dart_velocity[0] / magnitude
+		dart_sprite.y = monkey_sprite.y + dart_velocity[1] / magnitude
+		dart_sprite.update()
+
 	#left_onpress = left_onpress and left_click
 	right_click = mouse.get_pressed(3)[2]
 	if right_click:
@@ -119,65 +154,42 @@ while run:
 
 	#check_button_hovers(mouse_x, mouse_y, left_click, left_onpress)
 
-	draw()
-	delta_time = clock.tick_busy_loop(240) / 1000.0
-	pg.display.set_caption("Bloons AI - FPS: " + str(int(clock.get_fps())))
-
-	mouse_angle = - math.atan2(mouse_y - (monkey_sprite_position[1] + 98 + 33), mouse_x - (monkey_sprite_position[0] + 98 + 5)) * 180.0 / np.pi
+	mouse_angle = math.atan2(mouse_y - monkey_sprite.y, mouse_x - monkey_sprite.x) * 180.0 / np.pi
 
 	if flying:
-		arm_angle = mouse_angle
+		arm_sprite.set_angle(mouse_angle)
 	else:
-		arm_angle = mouse_angle - 45
-	arm_sprite = pg.transform.scale(monkey_arm, (196, 196))
-	arm_sprite = pg.transform.rotate(arm_sprite, arm_angle)
-
-	dx = 98 * (np.cos(arm_angle * np.pi / 180.0) + np.sin(arm_angle * np.pi / 180.0))
-	dy = 98 * (np.cos(arm_angle * np.pi / 180.0) - np.sin(arm_angle * np.pi / 180.0))
-	offset = max(abs(dx), abs(dy)) - 98
-
-	arm_sprite_position[0] = monkey_sprite_position[0] - offset + 5
-	arm_sprite_position[1] = monkey_sprite_position[1] - offset + 33
+		arm_sprite.set_angle(mouse_angle + 60)
 
 	if not flying:
 		arm_length = 30
-		dart_sprite = pg.transform.scale(dart, (136, 136))
-		dart_sprite = pg.transform.rotate(dart_sprite, mouse_angle)
-
-		dx = 68 * (np.cos(mouse_angle * np.pi / 180.0) + np.sin(mouse_angle * np.pi / 180.0))
-		dy = 68 * (np.cos(mouse_angle * np.pi / 180.0) - np.sin(mouse_angle * np.pi / 180.0))
-		offset = max(abs(dx), abs(dy)) - 68
-
-		dart_sprite_position[0] = monkey_sprite_position[0] + 98 + 5 + arm_length * np.cos(arm_angle * np.pi / 180.0) - 68 - offset
-		dart_sprite_position[1] = monkey_sprite_position[1] + 98 + 33 - arm_length * np.sin(arm_angle * np.pi / 180.0) - 68 - offset
+		dart_sprite.x = arm_sprite.x + arm_length * np.cos(arm_sprite.angle * np.pi / 180.0)
+		dart_sprite.y = arm_sprite.y + arm_length * np.sin(arm_sprite.angle * np.pi / 180.0)
+		dart_sprite.update()
+		dart_sprite.set_angle(mouse_angle)
 	else:
-		#dart_velocity[0] -= (dart_velocity[0] * dart_velocity[0]) * 0.0002 * delta_time
+		#dart_velocity[0] -= (dart_velocity[0] * dart_velocity[0]) * 0.0002 * delta_time	#roze con el aire en la componente horizontal de la velocidad
 		dart_velocity[1] += dart_gravity * delta_time
-		dart_angle = - math.atan2(dart_velocity[1], dart_velocity[0]) * 180 / np.pi
-		dart_real_position[0] += dart_velocity[0] * delta_time
-		dart_real_position[1] += dart_velocity[1] * delta_time
-
-		dart_sprite_position[0] = dart_real_position[0] - 68
-		dart_sprite_position[1] = dart_real_position[1] - 68
-		dart_sprite = pg.transform.scale(dart, (136, 136))
-		dart_sprite = pg.transform.rotate(dart_sprite, dart_angle)
-
-		dx = 68 * (np.cos(dart_angle * np.pi / 180.0) + np.sin(dart_angle * np.pi / 180.0))
-		dy = 68 * (np.cos(dart_angle * np.pi / 180.0) - np.sin(dart_angle * np.pi / 180.0))
-		offset = max(abs(dx), abs(dy)) - 68
-
-		dart_sprite_position[0] += - offset
-		dart_sprite_position[1] += - offset
+		dart_velocity_angle = math.atan2(dart_velocity[1], dart_velocity[0]) * 180 / np.pi
+		dart_sprite.x += dart_velocity[0] * delta_time
+		dart_sprite.y += dart_velocity[1] * delta_time
+		dart_sprite.update()
+		dart_sprite.set_angle(dart_velocity_angle)
 
 		tip = [0, 0]
-		tip[0] = dart_real_position[0] + 68 * np.cos(dart_angle * np.pi / 180.0)
-		tip[1] = dart_real_position[1] - 68 * np.sin(dart_angle * np.pi / 180.0)
+		tip[0] = dart_sprite.x + dart_sprite.w / 2 * np.cos(dart_velocity_angle * np.pi / 180.0)
+		tip[1] = dart_sprite.y + dart_sprite.w / 2 * np.sin(dart_velocity_angle * np.pi / 180.0)
 
 		pop = [-1, -1]
-		pop[0] = tip[0] / cell_width
-		pop[1] = tip[1] / cell_height
+		pop[0] = int(tip[0] / cell_width)
+		pop[1] = int(tip[1] / cell_height)
 
-		if pop[0] >= 0 and pop[0] < columns and pop[1] >= 0 and pop[1] < rows and bloons_data[int(pop[1])][int(pop[0])] > 0:
-			bloons_data[int(pop[1])][int(pop[0])] = 0
+		if pop[0] >= 0 and pop[0] < columns and pop[1] >= 0 and pop[1] < rows and bloons_data[pop[0]][pop[1]] == 1:
+			bloons_data[pop[0]][pop[1]] = 0
+			bloon_sprites[pop[0]][pop[1]] = None
+
+	draw()
+	delta_time = clock.tick_busy_loop(120) / 1000.0
+	pg.display.set_caption("Bloons AI - FPS: " + str(int(clock.get_fps())))
 
 pg.quit()
