@@ -44,7 +44,6 @@ class Sprite:
 		self.ty = self.y - self.th / 2
 
 	def set_angle(self, new_angle):
-		return
 		if self.angle == new_angle:
 			return
 		self.angle = new_angle
@@ -145,8 +144,8 @@ while run:
 
 	#left_onpress = left_onpress and left_click
 	right_click = mouse.get_pressed(3)[2]
-	if right_click:
-		flying = False
+	#if right_click:
+	#	flying = False
 
 	#if (left_click or right_click) and search_state[0] == 2:
 	#	search_state[0] = 0
@@ -189,6 +188,9 @@ while run:
 		if pop[0] >= 0 and pop[0] < columns and pop[1] >= 0 and pop[1] < rows and bloons_data[pop[0]][pop[1]] == 1:
 			bloons_data[pop[0]][pop[1]] = 0
 			bloon_sprites[pop[0]][pop[1]] = None
+
+	if dart_sprite.x > width or dart_sprite.y > height:
+		flying = False
 
 	draw()
 	delta_time = clock.tick_busy_loop(framerate) / 1000.0
