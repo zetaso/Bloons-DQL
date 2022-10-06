@@ -63,7 +63,7 @@ class Sprite:
 		surface.blit(self.image, (self.tx, self.ty))
 
 #	Variables
-framerate = 120
+framerate = 60
 delta_time = 0.0008
 
 columns = 20
@@ -98,6 +98,7 @@ dart_gravity = 3840
 
 #	Pygame
 pg.init()
+pg.display.set_icon(pg.image.load("sprites/monkey.png"))
 surface = pg.display.set_mode((columns * cell_width, rows * cell_height))
 clock = pg.time.Clock()
 
@@ -189,7 +190,7 @@ while run:
 			bloon_sprites[pop[0]][pop[1]] = None
 
 	draw()
-	delta_time = clock.tick_busy_loop(120) / 1000.0
+	delta_time = clock.tick_busy_loop(framerate) / 1000.0
 	pg.display.set_caption("Bloons AI - FPS: " + str(int(clock.get_fps())))
 
 pg.quit()
