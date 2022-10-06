@@ -44,6 +44,7 @@ class Sprite:
 		self.ty = self.y - self.th / 2
 
 	def set_angle(self, new_angle):
+		return
 		if self.angle == new_angle:
 			return
 		self.angle = new_angle
