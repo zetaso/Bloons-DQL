@@ -2,11 +2,7 @@ import pygame as pg
 import pygame.mouse as mouse
 import numpy as np
 import random
-import sys
 import math
-from pygame import gfxdraw
-
-sign_fix = -1
 
 def draw():
 	background_sprite.draw()
@@ -49,7 +45,7 @@ class Sprite:
 		self.angle = new_angle
 		rad_angle = self.angle * np.pi / 180.0
 		self.image = pg.transform.scale(self.source, (self.w, self.h))
-		self.image = pg.transform.rotate(self.image, sign_fix * self.angle)
+		self.image = pg.transform.rotate(self.image, - self.angle)
 		if np.cos(rad_angle) * np.sin(rad_angle) >= 0:
 			self.tw = np.absolute(self.w * np.cos(rad_angle) + self.h * np.sin(rad_angle))
 			self.th = np.absolute(self.w * np.sin(rad_angle) + self.h * np.cos(rad_angle))
@@ -63,8 +59,8 @@ class Sprite:
 		surface.blit(self.image, (self.tx, self.ty))
 
 #	Variables
-framerate = 60
-delta_time = 0.0008
+framerate = 120
+delta_time = 1 / 120.0
 
 columns = 20
 rows = 10
@@ -82,7 +78,7 @@ bloons_data = []
 for i in range(columns):
 	bloons_data.append([])
 	for j in range(rows):
-		if i >= columns / 2 and i < columns - 1 and (j == 2 or j == 4 or j == 6):
+		if i >= columns / 2 - 2 and i < columns - 1 and (j >= 2 and j <= 6):
 			bloons_data[i].append(1)
 		else:
 			bloons_data[i].append(0)
@@ -112,7 +108,7 @@ for i in range(columns):
 	for j in range(rows):
 		if bloons_data[i][j] == 1:
 			bloon_sprites[i].append(Sprite((i + 0.5) * cell_width, (j + 0.5) * cell_height, bloon_img[random.randrange(4)] + ".png", cell_width, cell_height))
-			#bloon_sprites[i][j].set_angle(random.randrange(11) - 5)
+			#bloon_sprites[i][j].set_angle(random.randrange(21) - 10)
 		else:
 			bloon_sprites[i].append(None)
 
@@ -138,8 +134,8 @@ while run:
 		dart_velocity[0] = dart_speed * np.cos(mouse_angle * np.pi / 180.0)
 		dart_velocity[1] = dart_speed * np.sin(mouse_angle * np.pi / 180.0)
 		magnitude = np.sqrt(dart_velocity[0]**2 + dart_velocity[1]**2)
-		dart_sprite.x = monkey_sprite.x + dart_velocity[0] / magnitude
-		dart_sprite.y = monkey_sprite.y + dart_velocity[1] / magnitude
+		dart_sprite.x = monkey_sprite.x + dart_velocity[0] / magnitude * 0.01
+		dart_sprite.y = monkey_sprite.y + dart_velocity[1] / magnitude * 0.01
 		dart_sprite.update()
 
 	#left_onpress = left_onpress and left_click
@@ -193,7 +189,8 @@ while run:
 		flying = False
 
 	draw()
-	delta_time = clock.tick_busy_loop(framerate) / 1000.0
+	delta_time = 1 / 120.0
+	clock.tick_busy_loop(framerate)
 	pg.display.set_caption("Bloons AI - FPS: " + str(int(clock.get_fps())))
 
 pg.quit()
